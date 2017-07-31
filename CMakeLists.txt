@@ -61,6 +61,7 @@ include(ProjectJsonCpp)
 include(ProjectJsonRpcCpp)
 include(ProjectSecp256k1)
 include(ProjectSnark)
+include(ProjectSnappy)
 
 configure_project()
 
