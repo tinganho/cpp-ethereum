@@ -71,7 +71,7 @@ namespace dev
 						ostringstream() << payload;
 						o["in"] = "VALID";
 					}
-					catch (Exception const& _e)
+					catch (dev::Exception const& _e)
 					{
 						cnote << "Exception: " << diagnostic_information(_e);
 						o["in"] = "INVALID";
@@ -128,12 +128,12 @@ namespace dev
 						if (rlpType == RlpType::Test)
 							dev::test::checkRLPAgainstJson(inputData, payload);
 					}
-					catch (Exception const& _e)
+					catch (dev::Exception const& _e)
 					{
 						cnote << "Exception: " << diagnostic_information(_e);
 						was_exception = true;
 					}
-					catch (exception const& _e)
+					catch (std::exception const& _e)
 					{
 						cnote << "rlp exception: " << _e.what();
 						was_exception = true;
@@ -249,7 +249,7 @@ void runRlpTest(string _name, string _path)
 		//Listener::notifySuiteStarted(_name);
 		dev::test::doRlpTests(v, false);
 	}
-	catch (Exception const& _e)
+	catch (dev::Exception const& _e)
 	{
 		BOOST_ERROR("Failed test with Exception: " << diagnostic_information(_e));
 	}
@@ -275,11 +275,11 @@ BOOST_AUTO_TEST_CASE(EmptyArrayList)
 		RLP payload2(payloadToDecode);
 		ostringstream() << payload2;
 	}
-	catch (Exception const& _e)
+	catch (dev::Exception const& _e)
 	{
 		BOOST_ERROR("(EmptyArrayList) Failed test with Exception: " << _e.what());
 	}
-	catch (exception const& _e)
+	catch (std::exception const& _e)
 	{
 		BOOST_ERROR("(EmptyArrayList) Failed test with Exception: " << _e.what());
 	}
@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE(rlpRandom)
 			dev::test::doRlpTests(v, false);
 		}
 
-		catch (Exception const& _e)
+		catch (dev::Exception const& _e)
 		{
 			BOOST_ERROR(path.filename().string() + "Failed test with Exception: " << diagnostic_information(_e));
 		}

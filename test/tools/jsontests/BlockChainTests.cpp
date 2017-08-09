@@ -364,7 +364,7 @@ void fillBCTest(json_spirit::mObject& _o)
 				importedBlocks.back().clearState(); //close the state as it wont be needed. too many open states would lead to exception.
 			}
 		}
-		catch (Exception const& _e)
+		catch (dev::Exception const& _e)
 		{
 			cnote << testName + "block import throw an exception: " << diagnostic_information(_e);
 			checkExpectedException(blObj, _e);
@@ -439,7 +439,7 @@ void testBCTest(json_spirit::mObject& _o)
 			testChain.addBlock(blockFromRlp);
 		}
 		// if exception is thrown, RLP is invalid and no blockHeader, Transaction list, or Uncle list should be given
-		catch (Exception const& _e)
+		catch (dev::Exception const& _e)
 		{
 			cnote << testName + "state sync or block import did throw an exception: " << diagnostic_information(_e);
 			checkJsonSectionForInvalidBlock(blObj);
@@ -502,7 +502,7 @@ void testBCTest(json_spirit::mObject& _o)
 		{
 			blockchain.addBlock(blockFromFields);
 		}
-		catch (Exception const& _e)
+		catch (dev::Exception const& _e)
 		{
 			cerr << testName + "Error importing block from fields to blockchain: " << diagnostic_information(_e);
 			break;

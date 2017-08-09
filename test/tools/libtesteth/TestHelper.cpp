@@ -459,7 +459,7 @@ void userDefinedTest(std::function<void(json_spirit::mValue&, bool)> doTests)
 		json_spirit::mValue v_singleTest(oSingleTest);
 		doTests(v_singleTest, test::Options::get().filltests);
 	}
-	catch (Exception const& _e)
+	catch (dev::Exception const& _e)
 	{
 		BOOST_ERROR("Failed Test with Exception: " << diagnostic_information(_e));
 	}
@@ -503,7 +503,7 @@ void executeTests(const string& _name, const string& _testPathAppendix, const st
 			addClientInfo(v, testfilename);
 			writeFile(testPath + "/" + name + ".json", asBytes(json_spirit::write_string(v, true)));
 		}
-		catch (Exception const& _e)
+		catch (dev::Exception const& _e)
 		{
 			BOOST_ERROR(TestOutputHelper::testName() + " Failed filling test with Exception: " << diagnostic_information(_e));
 		}
@@ -524,7 +524,7 @@ void executeTests(const string& _name, const string& _testPathAppendix, const st
 		Listener::notifySuiteStarted(name);
 		doTests(v, false);
 	}
-	catch (Exception const& _e)
+	catch (dev::Exception const& _e)
 	{
 		BOOST_ERROR(TestOutputHelper::testName() + " Failed test with Exception: " << diagnostic_information(_e));
 	}
