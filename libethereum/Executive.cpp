@@ -353,7 +353,7 @@ bool Executive::executeCreate(Address const& _sender, u256 const& _endowment, u2
 	if (!_init.empty())
 		m_ext = make_shared<ExtVM>(m_s, m_envInfo, m_sealEngine, m_newAddress, _sender, _origin, _endowment, _gasPrice, bytesConstRef(), _init, sha3(_init), m_depth);
 	
-	if (m_envInfo.number() < m_sealEngine.chainParams().u256Param("metropolisForkBlock"))
+	if (m_envInfo.number() < m_sealEngine.chainParams().u256Param("constantinopleForkBlock"))
 	{
 		if (m_s.addressHasCode(m_newAddress))
 			// Overwrite with empty code in case the account already has a code
@@ -408,6 +408,7 @@ bool Executive::go(OnOpFunc const& _onOp)
 			auto vm = _onOp ? VMFactory::create(VMKind::Interpreter) : VMFactory::create();
 			if (m_isCreation)
 			{
+				m_s.clearStorage(m_ext->myAddress);
 				auto out = vm->exec(m_gas, *m_ext, _onOp);
 				if (m_res)
 				{
@@ -435,7 +436,6 @@ bool Executive::go(OnOpFunc const& _onOp)
 				}
 				if (m_res)
 					m_res->output = out.toVector(); // copy output to execution result
-				m_s.clearStorage(m_ext->myAddress);
 				m_s.setCode(m_ext->myAddress, out.toVector());
 			}
 			else

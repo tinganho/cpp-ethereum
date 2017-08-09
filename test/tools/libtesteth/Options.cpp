@@ -44,6 +44,7 @@ void printHelp()
 	cout << setw(30) << "--verbosity <level>" << setw(25) << "Set logs verbosity. 0 - silent, 1 - only errors, 2 - informative, >2 - detailed" << std::endl;
 	cout << setw(30) << "--vm <interpreter|jit|smart>" << setw(25) << "Set VM type for VMTests suite" << std::endl;
 	cout << setw(30) << "--vmtrace" << setw(25) << "Enable VM trace for the test. (Require build with VMTRACE=1)" << std::endl;
+	cout << setw(30) << "--jsontrace <Options>" << setw(25) << "Enable VM trace to stdout in json format. Argument is a json config: '{ \"disableStorage\" : false, \"disableMemory\" : false, \"disableStack\" : false, \"fullStorage\" : true }'" << std::endl;
 	cout << setw(30) << "--stats <OutFile>" << setw(25) << "Output debug stats to the file" << std::endl;
 	cout << setw(30) << "--exectimelog" << setw(25) << "Output execution time for each test suite" << std::endl;
 	cout << setw(30) << "--statediff" << setw(25) << "Trace state difference for state tests" << std::endl;
@@ -59,13 +60,28 @@ void printHelp()
 
 	cout << std::endl << "Test Generation" << std::endl;
 	cout << setw(30) << "--filltests" << setw(25) << "Run test fillers" << std::endl;
-	cout << setw(30) << "--checkstate" << setw(25) << "Enable expect section state checks" << std::endl;
 	cout << setw(30) << "--fillchain" << setw(25) << "When filling the state tests, fill tests as blockchain instead" << std::endl;
 	cout << setw(30) << "--randomcode <MaxOpcodeNum>" << setw(25) << "Generate smart random EVM code" << std::endl;
 	cout << setw(30) << "--createRandomTest" << setw(25) << "Create random test and output it to the console" << std::endl;
 	//cout << setw(30) << "--fulloutput" << setw(25) << "Disable address compression in the output field" << std::endl;
 
 	cout << setw(30) << "--help" << setw(25) << "Display list of command arguments" << std::endl;
+}
+
+StandardTrace::DebugOptions debugOptions(Json::Value const& _json)
+{
+	StandardTrace::DebugOptions op;
+	if (!_json.isObject() || _json.empty())
+		return op;
+	if (!_json["disableStorage"].empty())
+		op.disableStorage = _json["disableStorage"].asBool();
+	if (!_json["disableMemory"].empty())
+		op.disableMemory = _json["disableMemory"].asBool();
+	if (!_json["disableStack"].empty())
+		op.disableStack =_json["disableStack"].asBool();
+	if (!_json["fullStorage"].empty())
+		op.fullStorage = _json["fullStorage"].asBool();
+	return op;
 }
 
 Options::Options(int argc, char** argv)
@@ -120,6 +136,15 @@ Options::Options(int argc, char** argv)
 			vmtrace = true;
 			g_logVerbosity = 13;
 		}
+		else if (arg == "--jsontrace")
+		{
+			throwIfNoArgumentFollows();
+			jsontrace = true;
+			auto arg = std::string{argv[++i]};
+			Json::Value value;
+			Json::Reader().parse(arg, value);
+			jsontraceOptions = debugOptions(value);
+		}
 		else if (arg == "--filltests")
 			filltests = true;
 		else if (arg == "--fillchain")
@@ -142,8 +167,6 @@ Options::Options(int argc, char** argv)
 			inputLimits = true;
 		else if (arg == "--bigdata")
 			bigData = true;
-		else if (arg == "--checkstate")
-			checkstate = true;
 		else if (arg == "--wallet")
 			wallet = true;
 		else if (arg == "--all")

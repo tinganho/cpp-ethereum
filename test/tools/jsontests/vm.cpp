@@ -308,9 +308,11 @@ void doVMTests(json_spirit::mValue& _v, bool _fillin)
 			continue;
 		}
 
-		BOOST_REQUIRE_MESSAGE(o.count("env") > 0, testname + "env not set!");
-		BOOST_REQUIRE_MESSAGE(o.count("pre") > 0, testname + "pre not set!");
-		BOOST_REQUIRE_MESSAGE(o.count("exec") > 0, testname + "exec not set!");
+		BOOST_REQUIRE_MESSAGE(o.count("env") > 0, testname + " env not set!");
+		BOOST_REQUIRE_MESSAGE(o.count("pre") > 0, testname + " pre not set!");
+		BOOST_REQUIRE_MESSAGE(o.count("exec") > 0, testname + " exec not set!");
+		if (! _fillin)
+			BOOST_REQUIRE_MESSAGE(o.count("expect") == 0, testname + " expect set!");
 
 		TestLastBlockHashes lastBlockHashes(h256s(256, h256()));
 		eth::EnvInfo env = FakeExtVM::importEnv(o["env"].get_obj(), lastBlockHashes);
@@ -378,20 +380,39 @@ void doVMTests(json_spirit::mValue& _v, bool _fillin)
 		{
 			o["env"] = mValue(fev.exportEnv());
 			o["exec"] = mValue(fev.exportExec());
-			if (!vmExceptionOccured)
+			if (vmExceptionOccured)
+			{
+				if (o.count("expect") > 0)
+				{
+					BOOST_REQUIRE_MESSAGE(o.count("expect") == 1, testname + " multiple expect set!");
+					State postState(State::Null);
+					State expectState(State::Null);
+					AccountMaskMap expectStateMap;
+					ImportTest::importState(mValue(fev.exportState()).get_obj(), postState);
+					ImportTest::importState(o["expect"].get_obj(), expectState, expectStateMap);
+					ImportTest::compareStates(expectState, postState, expectStateMap, WhenError::Throw);
+					o.erase(o.find("expect"));
+				}
+				BOOST_REQUIRE_MESSAGE(o.count("expect") == 0, testname + " expect should have been erased!");
+			}
+			else
 			{
 				o["post"] = mValue(fev.exportState());
 
 				if (o.count("expect") > 0)
 				{
+					BOOST_REQUIRE_MESSAGE(o.count("expect") == 1, testname + " multiple expect set!");
+
 					State postState(State::Null);
 					State expectState(State::Null);
 					AccountMaskMap expectStateMap;
 					ImportTest::importState(o["post"].get_obj(), postState);
 					ImportTest::importState(o["expect"].get_obj(), expectState, expectStateMap);
-					ImportTest::compareStates(expectState, postState, expectStateMap, Options::get().checkstate ? WhenError::Throw : WhenError::DontThrow);
+					ImportTest::compareStates(expectState, postState, expectStateMap, WhenError::Throw);
 					o.erase(o.find("expect"));
 				}
+
+				BOOST_REQUIRE_MESSAGE(o.count("expect") == 0, testname + " expect should have been erased!");
 
 				o["callcreates"] = fev.exportCallCreates();
 				o["out"] = output.size() > 4096 ? "#" + toString(output.size()) : toHexPrefixed(output);
@@ -400,11 +421,7 @@ void doVMTests(json_spirit::mValue& _v, bool _fillin)
 				if (o.count("expectOut") > 0)
 				{
 					std::string warning = " Check State: Error! Unexpected output: " + o["out"].get_str() + " Expected: " + o["expectOut"].get_str();
-					if (Options::get().checkstate)
-						BOOST_CHECK_MESSAGE(o["out"].get_str() == o["expectOut"].get_str(), warning);
-					else
-						BOOST_WARN_MESSAGE(o["out"].get_str() == o["expectOut"].get_str(), warning);
-
+					BOOST_CHECK_MESSAGE(o["out"].get_str() == o["expectOut"].get_str(), warning);
 					o.erase(o.find("expectOut"));
 				}
 
