@@ -40,7 +40,9 @@ set(CPP_ETHEREUM_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE PATH "Path to the root di
 include(EthPolicy)
 eth_policy()
 
-set(CMAKE_CONFIGURATION_TYPES Debug Release RelWithDebInfo)
+if(CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "" FORCE)
+endif()
 
 # Map current configuration to congigurations of imported targets.
 set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG RelWithDebInfo Release)
@@ -50,8 +52,8 @@ set(HUNTER_CONFIGURATION_TYPES Release)
 set(HUNTER_CACHE_SERVERS "https://github.com/ethereum/hunter-cache")
 include(HunterGate)
 HunterGate(
-    URL "https://github.com/ruslo/hunter/archive/v0.19.57.tar.gz"
-    SHA1 "f83ea762f0609c48a583d0e877a6358f6fbfe0d7"
+    URL "https://github.com/ruslo/hunter/archive/v0.19.71.tar.gz"
+    SHA1 "8fe144d9490501d398777532e0c0f56bc7bb0ec7"
 )
 
 if(HUNTER_ENABLED)
@@ -96,8 +98,10 @@ include(EthUtils)
 hunter_add_package(Boost COMPONENTS filesystem random system thread test)
 find_package(Boost CONFIG REQUIRED filesystem random system thread unit_test_framework)
 
+hunter_add_package(jsoncpp)
+find_package(jsoncpp CONFIG REQUIRED)
+
 include(ProjectCryptopp)
-include(ProjectJsonCpp)
 include(ProjectJsonRpcCpp)
 include(ProjectSecp256k1)
 include(ProjectSnark)
@@ -113,7 +117,6 @@ add_subdirectory(libethashseal)
 add_subdirectory(libethcore)
 add_subdirectory(libethereum)
 add_subdirectory(libevm)
-add_subdirectory(libevmcore)
 add_subdirectory(libp2p)
 add_subdirectory(libweb3jsonrpc)
 add_subdirectory(libwebthree)

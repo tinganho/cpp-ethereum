@@ -37,6 +37,7 @@ class Ethash: public SealEngineBase
 {
 public:
 	Ethash();
+	~Ethash();
 
 	std::string name() const override { return "Ethash"; }
 	unsigned revision() const override { return 1; }
@@ -81,6 +82,9 @@ private:
 	eth::GenericFarm<EthashProofOfWork> m_farm;
 	std::string m_sealer = "cpu";
 	BlockHeader m_sealing;
+
+	/// A mutex covering m_sealing
+	Mutex m_submitLock;
 };
 
 }

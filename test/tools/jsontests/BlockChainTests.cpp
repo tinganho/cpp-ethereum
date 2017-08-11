@@ -106,16 +106,18 @@ void fillBCTest(json_spirit::mObject& _o);
 void testBCTest(json_spirit::mObject& _o);
 
 //percent output for many tests in one file
-void doBlockchainTests(json_spirit::mValue& _v, bool _fillin)
+json_spirit::mValue doBlockchainTests(json_spirit::mValue const& _v, bool _fillin)
 {
 	TestOutputHelper::initTest(_v);	//Count how many tests in the json object (read from .json file)
-	doBlockchainTestNoLog(_v, _fillin); //Do the test / test generation
+	json_spirit::mValue ret = doBlockchainTestNoLog(_v, _fillin); //Do the test / test generation
 	TestOutputHelper::finishTest(); //Calculate the time of test execution and add it to the log
+	return ret;
 }
 
-void doTransitionTest(json_spirit::mValue& _v, bool _fillin)
+json_spirit::mValue doTransitionTest(json_spirit::mValue const& _input, bool _fillin)
 {
-	for (auto& i: _v.get_obj())
+	json_spirit::mValue output = _input;
+	for (auto& i: output.get_obj())
 	{
 		string testname = i.first;
 		json_spirit::mObject& o = i.second.get_obj();
@@ -139,15 +141,20 @@ void doTransitionTest(json_spirit::mValue& _v, bool _fillin)
 		else
 			testBCTest(o);
 	}
+	return output;
 }
 
-void doBlockchainTestNoLog(json_spirit::mValue& _v, bool _fillin)
+json_spirit::mValue doBlockchainTestNoLog(json_spirit::mValue const& _input, bool _fillin)
 {
+	json_spirit::mValue v = _input; // TODO: avoid copying and add only valid fields to the new object.
 	map<string, json_spirit::mObject> tests;
-	for (auto& i: _v.get_obj())
+	vector<decltype(v.get_obj().begin())> erase_list;
+
+	// range-for is not used because iterators are necessary for removing elements later.
+	for (auto i = v.get_obj().begin(); i != v.get_obj().end(); i++)
 	{
-		string testname = i.first;
-		json_spirit::mObject& o = i.second.get_obj();
+		string testname = i->first;
+		json_spirit::mObject& o = i->second.get_obj();
 
 		//Select test by name if --singletest is set and not filling state tests as blockchain
 		if (!Options::get().fillchain && !TestOutputHelper::passTest(testname))
@@ -205,8 +212,9 @@ void doBlockchainTestNoLog(json_spirit::mValue& _v, bool _fillin)
 				tests[newtestname] = jObj;
 			}
 
-			//delete source test from the json
-			_v.get_obj().erase(_v.get_obj().find(testname));
+			// will be deleted once after the loop.
+			// removing an element while in this loop causes memory corruption.
+			erase_list.push_back(i);
 		}
 		else
 		{
@@ -221,14 +229,19 @@ void doBlockchainTestNoLog(json_spirit::mValue& _v, bool _fillin)
 		}
 	}
 
+	//Delete source test from the json
+	for (auto i: erase_list)
+		v.get_obj().erase(i);
+
 	//Add generated tests to the result file
 	if (_fillin)
 	{
-		BOOST_CHECK_MESSAGE(_v.get_obj().size() == 0, " Test Filler is incorrect. Still having the test source when generating from filler " + TestOutputHelper::testName());
-		json_spirit::mObject& obj = _v.get_obj();
+		BOOST_CHECK_MESSAGE(v.get_obj().size() == 0, " Test Filler is incorrect. Still having the test source when generating from filler " + TestOutputHelper::testName());
+		json_spirit::mObject& obj = v.get_obj();
 		for (auto& test : tests)
 			obj[test.first] = test.second;
 	}
+	return v;
 }
 
 void fillBCTest(json_spirit::mObject& _o)
